@@ -5,6 +5,8 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.values.PCollection;
 
 import options.BaseOptions;
+import steps.ExtractionStep;
+import steps.LoadStep;
 
 
 public class PageViewsExecutor {
@@ -21,6 +23,13 @@ public class PageViewsExecutor {
     }
 
     public void run(){
+        ExtractionStep extractionStep = new ExtractionStep(this.options, this.pipeline);
+        PCollection<String> lines = extractionStep.apply();
+
+        LoadStep loadStep = new LoadStep(this.options, lines);
+        loadStep.apply();
+
+        this.pipeline.run();
     }
 
     public static void main(String[] args) {
