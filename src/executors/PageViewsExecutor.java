@@ -3,6 +3,7 @@ package executors;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.values.PCollection;
+import org.json.simple.JSONObject;
 
 import options.BaseOptions;
 import steps.ExtractionStep;
@@ -24,9 +25,9 @@ public class PageViewsExecutor {
 
     public void run(){
         ExtractionStep extractionStep = new ExtractionStep(this.options, this.pipeline);
-        PCollection<String> lines = extractionStep.apply();
+        PCollection<JSONObject> jsons = extractionStep.apply();
 
-        LoadStep loadStep = new LoadStep(this.options, lines);
+        LoadStep loadStep = new LoadStep(this.options, jsons);
         loadStep.apply();
 
         this.pipeline.run();
