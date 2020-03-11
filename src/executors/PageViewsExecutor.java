@@ -27,6 +27,12 @@ public class PageViewsExecutor {
         ExtractionStep extractionStep = new ExtractionStep(this.options, this.pipeline);
         PCollection<JSONObject> jsons = extractionStep.apply();
 
+        // TODO group by customer
+
+        // TODO order by timestamp (inside each customer group)
+
+        // TODO classify as abandoned or not
+
         LoadStep loadStep = new LoadStep(this.options, jsons);
         loadStep.apply();
 
