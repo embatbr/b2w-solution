@@ -2,26 +2,27 @@ package executors;
 
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import options.GroupingOptions;
+import options.GroupingAndSortingOptions;
+import steps.ClassificationStep;
 import steps.ExtractionStep;
 import steps.GroupingStep;
-import steps.LoadStep;
+import steps.LoadingStep;
+import steps.SortingStep;
 
 
 public class PageViewsExecutor {
 
-    private GroupingOptions options;
+    private GroupingAndSortingOptions options;
     private Pipeline pipeline;
 
     public PageViewsExecutor(String[] args) {
         this.options = PipelineOptionsFactory.fromArgs(args)
                                              .withValidation()
-                                             .as(GroupingOptions.class);
+                                             .as(GroupingAndSortingOptions.class);
 
         this.pipeline = Pipeline.create(this.options);
     }
@@ -31,14 +32,16 @@ public class PageViewsExecutor {
         PCollection<JSONObject> jsons = extractionStep.apply();
 
         GroupingStep groupingStep = new GroupingStep(this.options, jsons);
-        PCollection<KV<String, Iterable<JSONObject>>> groupedJsons = groupingStep.apply();
+        PCollection<JSONArray> groupedJsons = groupingStep.apply();
 
-        // TODO order by timestamp (inside each customer group)
+        SortingStep sortingStep = new SortingStep(this.options, groupedJsons);
+        PCollection<JSONArray> sortedGroupedJsons = sortingStep.apply();
 
-        // TODO classify as abandoned or not
+        ClassificationStep classificationStep = new ClassificationStep(this.options, sortedGroupedJsons);
+        PCollection<JSONArray> classifiedJsons = classificationStep.apply();
 
-        LoadStep loadStep = new LoadStep(this.options, groupedJsons);
-        loadStep.apply();
+        LoadingStep loadingStep = new LoadingStep(this.options, classifiedJsons);
+        loadingStep.apply();
 
         this.pipeline.run();
     }

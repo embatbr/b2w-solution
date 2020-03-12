@@ -25,9 +25,29 @@ class JSONKeyedFn extends DoFn<JSONObject, KV<String, JSONObject>> {
     public void processElement(ProcessContext context) {
         JSONObject in = context.element();
         KV<String, JSONObject> out = KV.of(
-            // (String) in.get("customer"), in
             (String) in.get(this.keyName), in
         );
+
+        context.output(out);
+    }
+}
+
+
+class JSONArrayFn extends DoFn<KV<String, Iterable<JSONObject>>, JSONArray> {
+
+    public JSONArrayFn() {
+        super();
+    }
+
+    @ProcessElement
+    public void processElement(ProcessContext context) {
+        KV<String, Iterable<JSONObject>> in = context.element();
+        JSONArray out = new JSONArray();
+
+        for(Object obj : in.getValue()) {
+            JSONObject json = (JSONObject) obj;
+            out.add(json);
+        }
 
         context.output(out);
     }
@@ -44,18 +64,21 @@ public class GroupingStep {
         this.jsons = jsons;
     }
 
-    public PCollection<KV<String, Iterable<JSONObject>>> apply() {
+    public PCollection<JSONArray> apply() {
         PCollection<KV<String, JSONObject>> keyedJsons = this.jsons.apply(
             ParDo.of(
-                // new JSONKeyedFn()
                 new JSONKeyedFn(this.options.getGroupKey())
             )
         );
 
-        PCollection<KV<String, Iterable<JSONObject>>> groupedJsons = keyedJsons.apply(
+        PCollection<KV<String, Iterable<JSONObject>>> keyedGroupedJsons = keyedJsons.apply(
             GroupByKey.<String, JSONObject>create()
         );
 
-        return groupedJsons;
+        return keyedGroupedJsons.apply(
+            ParDo.of(
+                new JSONArrayFn()
+            )
+        );
     }
 }
