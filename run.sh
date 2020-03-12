@@ -17,5 +17,5 @@ mvn -f pom.xml clean
 
 mvn -f pom.xml compile exec:java \
     -Dexec.mainClass=${MAIN_CLASS} \
-    -Dexec.args="--inputPath=${INPUT_PATH} --outputPath=${OUTPUT_PATH}" \
+    -Dexec.args="--inputPath=${INPUT_PATH} --outputPath=${OUTPUT_PATH} --groupKey=customer" \
     -Pdirect-runner

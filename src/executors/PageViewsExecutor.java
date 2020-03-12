@@ -2,23 +2,26 @@ package executors;
 
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import options.BaseOptions;
+import options.GroupingOptions;
 import steps.ExtractionStep;
+import steps.GroupingStep;
 import steps.LoadStep;
 
 
 public class PageViewsExecutor {
 
-    private BaseOptions options;
+    private GroupingOptions options;
     private Pipeline pipeline;
 
     public PageViewsExecutor(String[] args) {
         this.options = PipelineOptionsFactory.fromArgs(args)
                                              .withValidation()
-                                             .as(BaseOptions.class);
+                                             .as(GroupingOptions.class);
 
         this.pipeline = Pipeline.create(this.options);
     }
@@ -27,13 +30,14 @@ public class PageViewsExecutor {
         ExtractionStep extractionStep = new ExtractionStep(this.options, this.pipeline);
         PCollection<JSONObject> jsons = extractionStep.apply();
 
-        // TODO group by customer
+        GroupingStep groupingStep = new GroupingStep(this.options, jsons);
+        PCollection<KV<String, Iterable<JSONObject>>> groupedJsons = groupingStep.apply();
 
         // TODO order by timestamp (inside each customer group)
 
         // TODO classify as abandoned or not
 
-        LoadStep loadStep = new LoadStep(this.options, jsons);
+        LoadStep loadStep = new LoadStep(this.options, groupedJsons);
         loadStep.apply();
 
         this.pipeline.run();

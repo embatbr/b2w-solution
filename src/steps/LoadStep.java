@@ -3,14 +3,16 @@ package steps;
 
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import options.BaseOptions;
 
 
-class JsonToStringFn extends DoFn<JSONObject, String> {
+class JsonToStringFn extends DoFn<KV<String, Iterable<JSONObject>>, String> {
 
     public JsonToStringFn() {
         super();
@@ -18,8 +20,23 @@ class JsonToStringFn extends DoFn<JSONObject, String> {
 
     @ProcessElement
     public void processElement(ProcessContext context) {
-        JSONObject in = context.element();
-        String out = in.toJSONString();
+        KV<String, Iterable<JSONObject>> in = context.element();
+        // String out = in.getKey() + " <==> " + in.getValue().toJSONString();
+        String out = in.getKey() + " <==> ";
+        // String out = "";
+        int count = 0;
+
+        for(Object json : in.getValue()) {
+            String dumpedJson = ((JSONObject) json).toJSONString();
+            if(count == 0) {
+                out = out + dumpedJson;
+            }
+            else {
+                out = out + "," + dumpedJson;
+            }
+
+            count = count + 1;
+        }
 
         context.output(out);
     }
@@ -29,15 +46,15 @@ class JsonToStringFn extends DoFn<JSONObject, String> {
 public class LoadStep {
 
     private BaseOptions options;
-    private PCollection<JSONObject> jsons;
+    private PCollection<KV<String, Iterable<JSONObject>>> groupedJsons;
 
-    public LoadStep(BaseOptions options, PCollection<JSONObject> jsons) {
+    public LoadStep(BaseOptions options, PCollection<KV<String, Iterable<JSONObject>>> groupedJsons) {
         this.options = options;
-        this.jsons = jsons;
+        this.groupedJsons = groupedJsons;
     }
 
     public void apply() {
-        PCollection<String> lines = jsons.apply(
+        PCollection<String> lines = groupedJsons.apply(
             ParDo.of(
                 new JsonToStringFn()
             )
