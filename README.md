@@ -9,7 +9,7 @@ This solution was written using a computer with Ubuntu operating system, process
 
 ### Requirements:
 
-- Java 11
+- Java 8
 - Maven
 
 

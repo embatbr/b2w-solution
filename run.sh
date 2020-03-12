@@ -7,7 +7,7 @@ INPUT_PATH="${PROJECT_ROOT_PATH}/input/page-views.json"
 OUTPUT_PATH="${PROJECT_ROOT_PATH}/output/abandoned-carts.json"
 
 
-# export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 
 MAIN_CLASS="executors.PageViewsExecutor"
 RUNNER="DirectRunner"
